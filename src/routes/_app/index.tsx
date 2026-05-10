@@ -1,199 +1,318 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Bell, MapPin, Scissors, Sparkles, Crown, Baby, ArrowRight, Flame } from "lucide-react";
-import { LuxurySearchBar } from "@/components/luxury/LuxurySearchBar";
-import { SectionHeader, LoadingSkeleton, EmptyStateLuxury } from "@/components/luxury/States";
-import { SalonCardPremium } from "@/components/luxury/SalonCardPremium";
-import { BarberCardPremium } from "@/components/luxury/BarberCardPremium";
-import { listSalons, listBarbers } from "@/lib/api/catalog";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Bell,
+  Search,
+  Scissors,
+  Sparkles,
+  Crown,
+  Baby,
+  ChevronRight,
+  MapPin,
+  Locate,
+  Star,
+} from "lucide-react";
+import { listSalons, nearbySalons } from "@/lib/api/catalog";
 import { useGeoStore } from "@/lib/stores/geo";
 import { useAuthStore } from "@/lib/stores/auth";
 import { useNotificationsStore } from "@/lib/stores/notifications";
-import { initials } from "@/lib/format";
+import { initials, formatKm } from "@/lib/format";
+import { MapView } from "@/components/luxury/MapView";
+import type { Salon } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/")({
-  component: DiscoverPage,
+  component: HomePage,
 });
 
 const CATEGORIES = [
-  { id: "haircut", label: "Soch", Icon: Scissors },
+  { id: "haircut", label: "Soch olish", Icon: Scissors },
   { id: "beard", label: "Soqol", Icon: Sparkles },
   { id: "premium", label: "Premium", Icon: Crown },
-  { id: "kids", label: "Bola", Icon: Baby },
+  { id: "kids", label: "Bolalar", Icon: Baby },
 ] as const;
 
-function DiscoverPage() {
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState<string | null>(null);
+// Three sheet sizes (Yandex Go style)
+const SHEET = { peek: 0.32, mid: 0.6, full: 0.92 } as const;
+type SheetState = keyof typeof SHEET;
+
+function HomePage() {
   const navigate = useNavigate();
   const coords = useGeoStore((s) => s.coords);
   const requestGeo = useGeoStore((s) => s.request);
+  const radiusKm = useGeoStore((s) => s.radiusKm);
   const user = useAuthStore((s) => s.user);
   const unread = useNotificationsStore((s) => s.unreadCount());
 
-  useEffect(() => { if (!coords) requestGeo(); }, [coords, requestGeo]);
+  const [cat, setCat] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<SheetState>("mid");
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  const salonsQ = useQuery({
-    queryKey: ["salons", q, coords],
-    queryFn: () => listSalons({ origin: coords, q }),
+  useEffect(() => {
+    if (!coords) requestGeo();
+  }, [coords, requestGeo]);
+
+  const nearbyQ = useQuery({
+    queryKey: ["home-nearby", coords, radiusKm],
+    queryFn: () => (coords ? nearbySalons(coords, radiusKm) : Promise.resolve([])),
+    enabled: !!coords,
   });
-  const barbersQ = useQuery({
-    queryKey: ["barbers", coords],
-    queryFn: () => listBarbers({ origin: coords }),
+  const allQ = useQuery({
+    queryKey: ["home-all", coords],
+    queryFn: () => listSalons({ origin: coords }),
   });
 
-  const filtered = (salonsQ.data ?? []).filter((s) =>
-    cat ? s.services.some((sv) => sv.category === cat) : true,
+  const list = useMemo<Salon[]>(() => {
+    const base = (nearbyQ.data?.length ? nearbyQ.data : allQ.data) ?? [];
+    return cat ? base.filter((s) => s.services.some((sv) => sv.category === cat)) : base;
+  }, [nearbyQ.data, allQ.data, cat]);
+
+  const markers = useMemo(
+    () => list.map((s) => ({ id: s.id, lat: s.lat, lng: s.lng, label: s.name })),
+    [list],
   );
 
-  return (
-    <div className="pb-4">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-foreground via-foreground to-foreground/85 px-5 pb-8 pt-safe text-background">
-        <div aria-hidden className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gold/20 blur-3xl" />
-        <div aria-hidden className="absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-gold/10 blur-3xl" />
+  // ---- Bottom sheet drag ----
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ y: number; h: number } | null>(null);
+  const [dragH, setDragH] = useState<number | null>(null);
 
-        <header className="relative flex items-center justify-between pt-5">
+  const onDragStart = (e: React.PointerEvent) => {
+    const el = sheetRef.current;
+    if (!el) return;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    dragRef.current = { y: e.clientY, h: el.getBoundingClientRect().height };
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const dy = e.clientY - dragRef.current.y;
+    const next = Math.min(window.innerHeight * 0.95, Math.max(window.innerHeight * 0.18, dragRef.current.h - dy));
+    setDragH(next);
+  };
+  const onDragEnd = () => {
+    if (!dragRef.current) return;
+    const h = dragH ?? dragRef.current.h;
+    const ratio = h / window.innerHeight;
+    const target: SheetState =
+      ratio < 0.45 ? "peek" : ratio < 0.75 ? "mid" : "full";
+    setSheet(target);
+    setDragH(null);
+    dragRef.current = null;
+  };
+
+  const sheetHeight = dragH != null ? `${dragH}px` : `${SHEET[sheet] * 100}vh`;
+
+  return (
+    <div className="fixed inset-0 overflow-hidden bg-background">
+      {/* Full-bleed map */}
+      <div className="absolute inset-0">
+        {typeof window !== "undefined" && (
+          <MapView
+            center={coords}
+            markers={markers}
+            activeId={activeId}
+            onMarkerClick={(id) => {
+              setActiveId(id);
+              setSheet("mid");
+            }}
+            radiusKm={radiusKm}
+          />
+        )}
+      </div>
+
+      {/* Top floating bar */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 pt-safe">
+        <div className="pointer-events-auto mx-3 mt-3 flex items-center gap-2">
           <Link
             to={user ? "/profile" : "/auth"}
-            className="flex items-center gap-2.5 rounded-full bg-white/10 py-1.5 pl-1.5 pr-3.5 backdrop-blur"
+            aria-label="Profil"
+            className="grid h-12 w-12 place-items-center rounded-full bg-surface shadow-card ring-1 ring-border"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-gold text-[11px] font-bold text-gold-foreground">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-foreground text-[11px] font-bold text-background">
               {user ? initials(user.name) : "MB"}
             </span>
-            <span className="text-xs font-medium text-background/90">
-              {user ? user.name : "Kirish"}
-            </span>
           </Link>
+
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/map" })}
+            className="flex flex-1 items-center gap-3 rounded-full bg-surface py-3 pl-4 pr-3 shadow-card ring-1 ring-border"
+          >
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1 truncate text-left text-sm text-muted-foreground">
+              Salon yoki barber qidirish
+            </span>
+          </button>
+
           <Link
             to="/notifications"
             aria-label="Xabarlar"
-            className="relative grid h-10 w-10 place-items-center rounded-full bg-white/10 backdrop-blur"
+            className="relative grid h-12 w-12 place-items-center rounded-full bg-surface shadow-card ring-1 ring-border"
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-5 w-5 text-foreground" />
             {unread > 0 && (
-              <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-gold px-1 text-[9px] font-bold text-gold-foreground ring-2 ring-foreground">
+              <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-surface">
                 {unread}
               </span>
             )}
           </Link>
-        </header>
-
-        <div className="relative mt-7">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">MyBarber</p>
-          <h1 className="mt-2 text-[28px] font-bold leading-[1.1] tracking-tight text-balance">
-            Premium tajribangizni
-            <br />
-            <span className="text-gold">sevimli barberingiz</span> bilan
-            boshlang.
-          </h1>
         </div>
 
-        <div className="relative mt-6">
-          <LuxurySearchBar value={q} onChange={setQ} />
-        </div>
-
-        <div className="relative mt-4 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-none">
+        {/* Locate me + radius hint */}
+        <div className="pointer-events-auto absolute right-3 top-[6.5rem] flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => navigate({ to: "/map" })}
-            className="flex shrink-0 items-center gap-2 rounded-full bg-gold px-4 py-2.5 text-xs font-semibold text-gold-foreground shadow-luxury"
+            onClick={requestGeo}
+            aria-label="Mening joylashuvim"
+            className="grid h-11 w-11 place-items-center rounded-full bg-surface shadow-card ring-1 ring-border active:scale-95"
           >
-            <MapPin className="h-3.5 w-3.5" /> Yaqin atrofda
+            <Locate className="h-4 w-4 text-foreground" />
           </button>
-          {CATEGORIES.map(({ id, label, Icon }) => {
-            const active = cat === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setCat(active ? null : id)}
-                className={[
-                  "flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-semibold transition",
-                  active
-                    ? "border-background bg-background text-foreground"
-                    : "border-white/20 bg-white/5 text-background/90",
-                ].join(" ")}
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      {/* Stat strip */}
-      <div className="-mt-6 mx-4 grid grid-cols-3 overflow-hidden rounded-3xl border border-border bg-surface shadow-card">
-        <Stat n="120+" l="Salonlar" />
-        <Stat n="450+" l="Barberlar" divider />
-        <Stat n="4.9★" l="O'rtacha" divider />
-      </div>
+      {/* Bottom sheet */}
+      <div
+        ref={sheetRef}
+        className="absolute inset-x-0 bottom-0 z-30 flex flex-col rounded-t-[28px] bg-surface shadow-luxury ring-1 ring-border transition-[height] duration-300 ease-out"
+        style={{
+          height: sheetHeight,
+          transitionDuration: dragH != null ? "0ms" : undefined,
+          paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
+        {/* Drag handle */}
+        <div
+          className="flex cursor-grab touch-none flex-col items-center pt-2.5 pb-1 active:cursor-grabbing"
+          onPointerDown={onDragStart}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragEnd}
+          onPointerCancel={onDragEnd}
+          onClick={() => setSheet(sheet === "peek" ? "mid" : sheet === "mid" ? "full" : "peek")}
+        >
+          <span className="h-1.5 w-12 rounded-full bg-border" />
+        </div>
 
-      <section className="mt-8 px-4">
-        <SectionHeader eyebrow="Tavsiya" title="Yaqin atrofdagi salonlar" action={
-          <Link to="/map" className="inline-flex items-center gap-1 text-xs font-semibold text-foreground">
-            Xaritada <ArrowRight className="h-3 w-3" />
+        {/* Service quick actions (Yandex Go-style tiles) */}
+        <div className="px-4 pt-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Xizmatlar
+          </p>
+          <div className="mt-2 grid grid-cols-4 gap-2">
+            {CATEGORIES.map(({ id, label, Icon }) => {
+              const active = cat === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setCat(active ? null : id)}
+                  className={[
+                    "group flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-3 text-[11px] font-semibold transition active:scale-[0.97]",
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-foreground",
+                  ].join(" ")}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-center leading-tight">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="mt-4 flex items-center justify-between px-4">
+          <h2 className="text-[15px] font-bold tracking-tight text-foreground">
+            Yaqin atrofdagi salonlar
+          </h2>
+          <Link to="/map" className="inline-flex items-center gap-0.5 text-xs font-semibold text-foreground">
+            Xaritada <ChevronRight className="h-3.5 w-3.5" />
           </Link>
-        } />
-        {salonsQ.isLoading ? (
-          <div className="flex gap-3 overflow-x-auto px-1 pb-1 scrollbar-none">
-            {[0, 1, 2].map((i) => <LoadingSkeleton key={i} className="h-56 w-[260px] shrink-0" />)}
-          </div>
-        ) : filtered.length === 0 ? (
-          <EmptyStateLuxury title="Hech narsa topilmadi" body="Boshqa kalit so'z yoki kategoriya tanlang." />
-        ) : (
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
-            {filtered.slice(0, 8).map((s) => <SalonCardPremium key={s.id} salon={s} />)}
-          </div>
-        )}
-      </section>
-
-      <section className="mt-8 px-4">
-        <SectionHeader
-          eyebrow="Trending"
-          title="Premium barberlar"
-          action={<Flame className="h-4 w-4 text-gold" />}
-        />
-        {barbersQ.isLoading ? (
-          <div className="flex gap-3 overflow-x-auto px-1 pb-1 scrollbar-none">
-            {[0, 1, 2].map((i) => <LoadingSkeleton key={i} className="h-60 w-44 shrink-0" />)}
-          </div>
-        ) : (
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
-            {(barbersQ.data ?? []).slice(0, 8).map((b) => <BarberCardPremium key={b.id} barber={b} />)}
-          </div>
-        )}
-      </section>
-
-      <section className="mt-8 px-4">
-        <SectionHeader eyebrow="Top reyting" title="Eng yaxshi baholangan" />
-        <div className="space-y-2.5">
-          {(salonsQ.data ?? [])
-            .slice()
-            .sort((a, b) => b.rating - a.rating)
-            .slice(0, 5)
-            .map((s) => <SalonCardPremium key={s.id} salon={s} layout="horizontal" />)}
         </div>
-      </section>
 
-      <div className="mx-4 mt-10 overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/15 via-surface to-surface p-5 shadow-card">
-        <p className="label-eyebrow text-gold-foreground/80">Yangi</p>
-        <h3 className="mt-1 text-lg font-bold text-foreground">Premium a'zolik tez orada</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Eksklyuziv chegirmalar va prioritet bandlash imkoniyati.</p>
-        <button className="mt-4 inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-xs font-semibold text-background">
-          Kutish ro'yxatiga qo'shilish <ArrowRight className="h-3 w-3" />
-        </button>
+        <div className="mt-2 flex-1 overflow-y-auto px-4 pb-4 scrollbar-none">
+          {nearbyQ.isLoading || allQ.isLoading ? (
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          ) : list.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+              <p className="text-sm font-semibold text-foreground">Hech narsa topilmadi</p>
+              <p className="mt-1 text-xs text-muted-foreground">Boshqa kategoriya tanlang.</p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {list.map((s) => (
+                <li key={s.id}>
+                  <SalonRow
+                    salon={s}
+                    active={activeId === s.id}
+                    onHover={() => setActiveId(s.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function Stat({ n, l, divider }: { n: string; l: string; divider?: boolean }) {
+function SalonRow({
+  salon,
+  active,
+  onHover,
+}: {
+  salon: Salon;
+  active: boolean;
+  onHover: () => void;
+}) {
   return (
-    <div className={["py-3 text-center", divider ? "border-l border-border" : ""].join(" ")}>
-      <p className="text-base font-bold text-foreground">{n}</p>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{l}</p>
-    </div>
+    <Link
+      to="/salon/$id"
+      params={{ id: salon.id }}
+      onMouseEnter={onHover}
+      onFocus={onHover}
+      className={[
+        "flex items-center gap-3 rounded-2xl bg-background p-3 ring-1 transition active:scale-[0.99]",
+        active ? "ring-foreground" : "ring-border hover:ring-foreground/40",
+      ].join(" ")}
+    >
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <img
+          src={salon.cover}
+          alt={salon.name}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <h3 className="truncate text-sm font-bold text-foreground">{salon.name}</h3>
+          <span
+            className={[
+              "ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+              salon.open ? "bg-foreground text-background" : "bg-muted text-muted-foreground",
+            ].join(" ")}
+          >
+            {salon.open ? "Ochiq" : "Yopiq"}
+          </span>
+        </div>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          {salon.address}
+          {salon.distanceKm != null && <span>· {formatKm(salon.distanceKm)}</span>}
+        </p>
+        <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-foreground">
+          <Star className="h-3 w-3 fill-foreground" />
+          {salon.rating.toFixed(1)}
+          <span className="font-normal text-muted-foreground">({salon.reviewCount})</span>
+        </p>
+      </div>
+    </Link>
   );
 }

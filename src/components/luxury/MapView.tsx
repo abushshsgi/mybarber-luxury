@@ -7,17 +7,17 @@ type MarkerItem = { id: string; lat: number; lng: number; label: string };
 
 const userIcon = L.divIcon({
   className: "",
-  html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:oklch(0.72 0.10 180);box-shadow:0 0 0 6px oklch(0.72 0.10 180 / 0.25), 0 2px 6px rgba(0,0,0,0.2);"></span>`,
+  html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:#0A0A0A;border:3px solid #ffffff;box-shadow:0 0 0 6px rgba(10,10,10,0.18), 0 2px 6px rgba(0,0,0,0.25);"></span>`,
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
 
 function makePinIcon(active: boolean) {
-  const bg = active ? "#0A0A0A" : "#D4AF37";
-  const fg = active ? "#D4AF37" : "#0A0A0A";
+  const bg = active ? "#0A0A0A" : "#FFFFFF";
+  const fg = active ? "#FFFFFF" : "#0A0A0A";
   return L.divIcon({
     className: "",
-    html: `<div style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25));">
+    html: `<div style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3));">
       <svg viewBox="0 0 34 42" width="34" height="42" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 41 C17 41 32 26 32 16 A15 15 0 1 0 2 16 C2 26 17 41 17 41 Z" fill="${bg}" stroke="#0A0A0A" stroke-width="1.5"/>
         <circle cx="17" cy="16" r="5.5" fill="${fg}"/>
@@ -79,7 +79,7 @@ export function MapView({
           <Circle
             center={[center.lat, center.lng]}
             radius={radiusKm * 1000}
-            pathOptions={{ color: "#D4AF37", weight: 1.5, fillColor: "#D4AF37", fillOpacity: 0.06, dashArray: "4 6" }}
+            pathOptions={{ color: "#0A0A0A", weight: 1.5, fillColor: "#0A0A0A", fillOpacity: 0.05, dashArray: "4 6" }}
           />
         </>
       )}
