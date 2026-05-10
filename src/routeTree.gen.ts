@@ -9,61 +9,289 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as SalonIdRouteImport } from './routes/salon.$id'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as BookingSalonIdRouteImport } from './routes/booking.$salonId'
+import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
+import { Route as AppMapRouteImport } from './routes/_app/map'
+import { Route as AppChatRouteImport } from './routes/_app/chat'
+import { Route as AppBookingsRouteImport } from './routes/_app/bookings'
+import { Route as BookingBarberBarberIdRouteImport } from './routes/booking.barber.$barberId'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const SalonIdRoute = SalonIdRouteImport.update({
+  id: '/salon/$id',
+  path: '/salon/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingSalonIdRoute = BookingSalonIdRouteImport.update({
+  id: '/booking/$salonId',
+  path: '/booking/$salonId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMapRoute = AppMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBookingsRoute = AppBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AppRoute,
+} as any)
+const BookingBarberBarberIdRoute = BookingBarberBarberIdRouteImport.update({
+  id: '/booking/barber/$barberId',
+  path: '/booking/barber/$barberId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/auth': typeof AuthRoute
+  '/bookings': typeof AppBookingsRoute
+  '/chat': typeof AppChatRoute
+  '/map': typeof AppMapRoute
+  '/notifications': typeof AppNotificationsRoute
+  '/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/bookings': typeof AppBookingsRoute
+  '/chat': typeof AppChatRoute
+  '/map': typeof AppMapRoute
+  '/notifications': typeof AppNotificationsRoute
+  '/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
+  '/': typeof AppIndexRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_app/bookings': typeof AppBookingsRoute
+  '/_app/chat': typeof AppChatRoute
+  '/_app/map': typeof AppMapRoute
+  '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
+  '/_app/': typeof AppIndexRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/bookings'
+    | '/chat'
+    | '/map'
+    | '/notifications'
+    | '/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
+    | '/booking/barber/$barberId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/auth'
+    | '/bookings'
+    | '/chat'
+    | '/map'
+    | '/notifications'
+    | '/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
+    | '/'
+    | '/booking/barber/$barberId'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/auth'
+    | '/_app/bookings'
+    | '/_app/chat'
+    | '/_app/map'
+    | '/_app/notifications'
+    | '/_app/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
+    | '/_app/'
+    | '/booking/barber/$barberId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  BookingSalonIdRoute: typeof BookingSalonIdRoute
+  ChatIdRoute: typeof ChatIdRoute
+  SalonIdRoute: typeof SalonIdRoute
+  BookingBarberBarberIdRoute: typeof BookingBarberBarberIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/salon/$id': {
+      id: '/salon/$id'
+      path: '/salon/$id'
+      fullPath: '/salon/$id'
+      preLoaderRoute: typeof SalonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking/$salonId': {
+      id: '/booking/$salonId'
+      path: '/booking/$salonId'
+      fullPath: '/booking/$salonId'
+      preLoaderRoute: typeof BookingSalonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/map': {
+      id: '/_app/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof AppMapRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/bookings': {
+      id: '/_app/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof AppBookingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/booking/barber/$barberId': {
+      id: '/booking/barber/$barberId'
+      path: '/booking/barber/$barberId'
+      fullPath: '/booking/barber/$barberId'
+      preLoaderRoute: typeof BookingBarberBarberIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface AppRouteChildren {
+  AppBookingsRoute: typeof AppBookingsRoute
+  AppChatRoute: typeof AppChatRoute
+  AppMapRoute: typeof AppMapRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppProfileRoute: typeof AppProfileRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBookingsRoute: AppBookingsRoute,
+  AppChatRoute: AppChatRoute,
+  AppMapRoute: AppMapRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppProfileRoute: AppProfileRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
+  BookingSalonIdRoute: BookingSalonIdRoute,
+  ChatIdRoute: ChatIdRoute,
+  SalonIdRoute: SalonIdRoute,
+  BookingBarberBarberIdRoute: BookingBarberBarberIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
