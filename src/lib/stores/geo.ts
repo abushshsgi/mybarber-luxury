@@ -15,8 +15,8 @@ type State = {
 export const useGeoStore = create<State>()(
   persist(
     (set) => ({
-      coords: null,
-      status: "idle",
+      coords: TASHKENT_FALLBACK,
+      status: "fallback",
       radiusKm: 2,
       setRadius: (r) => set({ radiusKm: r }),
       request: () => {
