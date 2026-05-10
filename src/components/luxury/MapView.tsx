@@ -1,23 +1,44 @@
-import { APIProvider, Map, AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
-import { useEffect } from "react";
-import { MapPin } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-const KEY = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_GOOGLE_MAPS_API_KEY ?? "";
-const MAP_ID = "mybarber_beige";
+type MarkerItem = { id: string; lat: number; lng: number; label: string };
 
-type Marker = { id: string; lat: number; lng: number; label: string };
+const userIcon = L.divIcon({
+  className: "",
+  html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:oklch(0.72 0.10 180);box-shadow:0 0 0 6px oklch(0.72 0.10 180 / 0.25), 0 2px 6px rgba(0,0,0,0.2);"></span>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
 
-function Recenter({ center, activeId, markers }: { center: { lat: number; lng: number } | null; activeId: string | null; markers: Marker[] }) {
+function makePinIcon(active: boolean) {
+  const bg = active ? "#0A0A0A" : "#D4AF37";
+  const fg = active ? "#D4AF37" : "#0A0A0A";
+  return L.divIcon({
+    className: "",
+    html: `<div style="position:relative;width:34px;height:42px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25));">
+      <svg viewBox="0 0 34 42" width="34" height="42" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17 41 C17 41 32 26 32 16 A15 15 0 1 0 2 16 C2 26 17 41 17 41 Z" fill="${bg}" stroke="#0A0A0A" stroke-width="1.5"/>
+        <circle cx="17" cy="16" r="5.5" fill="${fg}"/>
+      </svg>
+    </div>`,
+    iconSize: [34, 42],
+    iconAnchor: [17, 41],
+  });
+}
+
+function Recenter({ center, activeId, markers }: { center: { lat: number; lng: number } | null; activeId: string | null; markers: MarkerItem[] }) {
   const map = useMap();
   useEffect(() => {
-    if (!map) return;
     if (activeId) {
       const m = markers.find((x) => x.id === activeId);
-      if (m) map.panTo({ lat: m.lat, lng: m.lng });
-    } else if (center) {
-      map.panTo(center);
+      if (m) map.flyTo([m.lat, m.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
     }
-  }, [map, center, activeId, markers]);
+  }, [map, activeId, markers]);
+  useEffect(() => {
+    if (center && !activeId) map.flyTo([center.lat, center.lng], map.getZoom(), { duration: 0.6 });
+  }, [map, center, activeId]);
   return null;
 }
 
@@ -29,51 +50,47 @@ export function MapView({
   radiusKm,
 }: {
   center: { lat: number; lng: number } | null;
-  markers: Marker[];
+  markers: MarkerItem[];
   activeId: string | null;
   onMarkerClick: (id: string) => void;
   radiusKm: number;
 }) {
-  if (!KEY) {
-    return (
-      <div className="grid h-full place-items-center bg-gradient-to-br from-muted to-secondary p-6 text-center">
-        <div>
-          <MapPin className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm font-semibold text-foreground">Xarita kalitini sozlash kerak</p>
-          <p className="mt-1 text-xs text-muted-foreground">VITE_GOOGLE_MAPS_API_KEY o'rnatilmagan. Ro'yxat pastda ko'rsatilmoqda.</p>
-        </div>
-      </div>
-    );
-  }
   const fallback = center ?? { lat: 41.3111, lng: 69.2797 };
+  const zoom = radiusKm === 1 ? 15 : radiusKm === 2 ? 14 : 13;
+  const initRef = useRef<[number, number]>([fallback.lat, fallback.lng]);
+
   return (
-    <APIProvider apiKey={KEY}>
-      <Map
-        defaultCenter={fallback}
-        defaultZoom={radiusKm === 1 ? 15 : radiusKm === 2 ? 14 : 13}
-        mapId={MAP_ID}
-        gestureHandling="greedy"
-        disableDefaultUI
-        clickableIcons={false}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <Recenter center={center} activeId={activeId} markers={markers} />
-        {center && (
-          <AdvancedMarker position={center}>
-            <span className="block h-4 w-4 rounded-full bg-teal ring-4 ring-teal/30" aria-label="Sizning joylashuvingiz" />
-          </AdvancedMarker>
-        )}
-        {markers.map((m) => (
-          <AdvancedMarker key={m.id} position={{ lat: m.lat, lng: m.lng }} onClick={() => onMarkerClick(m.id)}>
-            <Pin
-              background={activeId === m.id ? "#0A0A0A" : "#D4AF37"}
-              borderColor="#0A0A0A"
-              glyphColor="#F3EFE6"
-              scale={activeId === m.id ? 1.2 : 1}
-            />
-          </AdvancedMarker>
-        ))}
-      </Map>
-    </APIProvider>
+    <MapContainer
+      center={initRef.current}
+      zoom={zoom}
+      zoomControl={false}
+      attributionControl={false}
+      style={{ width: "100%", height: "100%", background: "var(--color-muted)" }}
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        subdomains={["a", "b", "c", "d"]}
+        maxZoom={19}
+      />
+      <Recenter center={center} activeId={activeId} markers={markers} />
+      {center && (
+        <>
+          <Marker position={[center.lat, center.lng]} icon={userIcon} />
+          <Circle
+            center={[center.lat, center.lng]}
+            radius={radiusKm * 1000}
+            pathOptions={{ color: "#D4AF37", weight: 1.5, fillColor: "#D4AF37", fillOpacity: 0.06, dashArray: "4 6" }}
+          />
+        </>
+      )}
+      {markers.map((m) => (
+        <Marker
+          key={m.id}
+          position={[m.lat, m.lng]}
+          icon={makePinIcon(activeId === m.id)}
+          eventHandlers={{ click: () => onMarkerClick(m.id) }}
+        />
+      ))}
+    </MapContainer>
   );
 }
