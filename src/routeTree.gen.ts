@@ -9,14 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as SalonIdRouteImport } from './routes/salon.$id'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as BookingSalonIdRouteImport } from './routes/booking.$salonId'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppMapRouteImport } from './routes/_app/map'
 import { Route as AppChatRouteImport } from './routes/_app/chat'
 import { Route as AppBookingsRouteImport } from './routes/_app/bookings'
+import { Route as BookingBarberBarberIdRouteImport } from './routes/booking.barber.$barberId'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
@@ -25,6 +35,21 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const SalonIdRoute = SalonIdRouteImport.update({
+  id: '/salon/$id',
+  path: '/salon/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingSalonIdRoute = BookingSalonIdRouteImport.update({
+  id: '/booking/$salonId',
+  path: '/booking/$salonId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
@@ -51,61 +76,114 @@ const AppBookingsRoute = AppBookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => AppRoute,
 } as any)
+const BookingBarberBarberIdRoute = BookingBarberBarberIdRouteImport.update({
+  id: '/booking/barber/$barberId',
+  path: '/booking/barber/$barberId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/auth': typeof AuthRoute
   '/bookings': typeof AppBookingsRoute
   '/chat': typeof AppChatRoute
   '/map': typeof AppMapRoute
   '/notifications': typeof AppNotificationsRoute
   '/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRoutesByTo {
+  '/auth': typeof AuthRoute
   '/bookings': typeof AppBookingsRoute
   '/chat': typeof AppChatRoute
   '/map': typeof AppMapRoute
   '/notifications': typeof AppNotificationsRoute
   '/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
   '/': typeof AppIndexRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
   '/_app/bookings': typeof AppBookingsRoute
   '/_app/chat': typeof AppChatRoute
   '/_app/map': typeof AppMapRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/profile': typeof AppProfileRoute
+  '/booking/$salonId': typeof BookingSalonIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/salon/$id': typeof SalonIdRoute
   '/_app/': typeof AppIndexRoute
+  '/booking/barber/$barberId': typeof BookingBarberBarberIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/bookings'
     | '/chat'
     | '/map'
     | '/notifications'
     | '/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
+    | '/booking/barber/$barberId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/bookings' | '/chat' | '/map' | '/notifications' | '/profile' | '/'
+  to:
+    | '/auth'
+    | '/bookings'
+    | '/chat'
+    | '/map'
+    | '/notifications'
+    | '/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
+    | '/'
+    | '/booking/barber/$barberId'
   id:
     | '__root__'
     | '/_app'
+    | '/auth'
     | '/_app/bookings'
     | '/_app/chat'
     | '/_app/map'
     | '/_app/notifications'
     | '/_app/profile'
+    | '/booking/$salonId'
+    | '/chat/$id'
+    | '/salon/$id'
     | '/_app/'
+    | '/booking/barber/$barberId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  BookingSalonIdRoute: typeof BookingSalonIdRoute
+  ChatIdRoute: typeof ChatIdRoute
+  SalonIdRoute: typeof SalonIdRoute
+  BookingBarberBarberIdRoute: typeof BookingBarberBarberIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -119,6 +197,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/salon/$id': {
+      id: '/salon/$id'
+      path: '/salon/$id'
+      fullPath: '/salon/$id'
+      preLoaderRoute: typeof SalonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking/$salonId': {
+      id: '/booking/$salonId'
+      path: '/booking/$salonId'
+      fullPath: '/booking/$salonId'
+      preLoaderRoute: typeof BookingSalonIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/profile': {
       id: '/_app/profile'
@@ -155,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBookingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/booking/barber/$barberId': {
+      id: '/booking/barber/$barberId'
+      path: '/booking/barber/$barberId'
+      fullPath: '/booking/barber/$barberId'
+      preLoaderRoute: typeof BookingBarberBarberIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -180,6 +286,11 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
+  BookingSalonIdRoute: BookingSalonIdRoute,
+  ChatIdRoute: ChatIdRoute,
+  SalonIdRoute: SalonIdRoute,
+  BookingBarberBarberIdRoute: BookingBarberBarberIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

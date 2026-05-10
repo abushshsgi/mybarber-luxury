@@ -96,7 +96,7 @@ function AuthPage() {
               {code.map((d, i) => (
                 <input
                   key={i}
-                  ref={(el) => (inputs.current[i] = el)}
+                  ref={(el) => { inputs.current[i] = el; }}
                   value={d}
                   onChange={(e) => {
                     const v = e.target.value.replace(/\D/g, "").slice(-1);
