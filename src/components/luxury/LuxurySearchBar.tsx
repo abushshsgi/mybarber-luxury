@@ -22,7 +22,7 @@ export function LuxurySearchBar({
   }, [local, onChange, value]);
 
   return (
-    <label className="flex items-center gap-3 rounded-2xl border border-border bg-surface/80 px-4 py-3 shadow-soft backdrop-blur transition focus-within:border-gold focus-within:ring-2 focus-within:ring-ring">
+    <label className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3.5 shadow-luxury transition focus-within:ring-2 focus-within:ring-gold">
       <Search className="h-5 w-5 text-muted-foreground" aria-hidden />
       <input
         autoFocus={autoFocus}

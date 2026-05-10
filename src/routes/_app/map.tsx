@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Crosshair, Locate, MapPin } from "lucide-react";
 import { useGeoStore } from "@/lib/stores/geo";
@@ -8,8 +8,7 @@ import { RadiusSelector } from "@/components/luxury/RadiusSelector";
 import { SalonCardPremium } from "@/components/luxury/SalonCardPremium";
 import { BarberCardPremium } from "@/components/luxury/BarberCardPremium";
 import { EmptyStateLuxury, LoadingSkeleton } from "@/components/luxury/States";
-
-const MapView = lazy(() => import("@/components/luxury/MapView").then((m) => ({ default: m.MapView })));
+import { MapView } from "@/components/luxury/MapView";
 
 export const Route = createFileRoute("/_app/map")({
   component: MapPage,
@@ -67,9 +66,11 @@ function MapPage() {
       </header>
 
       <div className="relative mx-4 flex-1 overflow-hidden rounded-3xl border border-border bg-muted shadow-card">
-        <Suspense fallback={<div className="grid h-full place-items-center text-muted-foreground"><MapPin className="h-6 w-6 animate-pulse" /></div>}>
+        {typeof window !== "undefined" ? (
           <MapView center={coords} markers={markers} activeId={activeId} onMarkerClick={setActiveId} radiusKm={radiusKm} />
-        </Suspense>
+        ) : (
+          <div className="grid h-full place-items-center text-muted-foreground"><MapPin className="h-6 w-6 animate-pulse" /></div>
+        )}
         <button
           type="button"
           onClick={request}

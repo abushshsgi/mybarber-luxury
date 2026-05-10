@@ -10,14 +10,17 @@ export function SalonCardPremium({ salon, layout = "vertical" }: { salon: Salon;
       <Link
         to="/salon/$id"
         params={{ id: salon.id }}
-        className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-soft transition hover:shadow-card"
+        className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-surface p-3 shadow-soft transition active:scale-[0.99] hover:shadow-card hover:border-foreground/20"
       >
-        <img
-          src={salon.cover}
-          alt={salon.name}
-          loading="lazy"
-          className="h-16 w-16 shrink-0 rounded-xl object-cover"
-        />
+        <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-xl">
+          <img
+            src={salon.cover}
+            alt={salon.name}
+            loading="lazy"
+            className="h-full w-full object-cover transition group-hover:scale-105"
+          />
+          <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/30 to-transparent" />
+        </div>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold text-foreground">{salon.name}</h3>
           <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
@@ -28,7 +31,9 @@ export function SalonCardPremium({ salon, layout = "vertical" }: { salon: Salon;
             <RatingStars value={salon.rating} count={salon.reviewCount} />
           </div>
         </div>
-        <span className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Band qilish</span>
+        <span className="rounded-full bg-primary px-3 py-2 text-[11px] font-semibold text-primary-foreground shadow-soft transition group-hover:bg-foreground">
+          Band qilish
+        </span>
       </Link>
     );
   }
@@ -36,23 +41,29 @@ export function SalonCardPremium({ salon, layout = "vertical" }: { salon: Salon;
     <Link
       to="/salon/$id"
       params={{ id: salon.id }}
-      className="block w-64 shrink-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition hover:shadow-card"
+      className="group block w-[260px] shrink-0 overflow-hidden rounded-3xl border border-border/70 bg-surface shadow-card transition active:scale-[0.98] hover:shadow-luxury"
     >
-      <div className="relative aspect-[5/3] overflow-hidden">
-        <img src={salon.cover} alt={salon.name} loading="lazy" className="h-full w-full object-cover" />
-        <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
-          {salon.open ? "Ochiq" : "Yopiq"}
+      <div className="relative aspect-[5/4] overflow-hidden">
+        <img src={salon.cover} alt={salon.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <span className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground shadow-soft backdrop-blur">
+          {salon.open ? "● Ochiq" : "Yopiq"}
         </span>
-      </div>
-      <div className="p-3">
-        <h3 className="truncate text-sm font-semibold">{salon.name}</h3>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{salon.address}</p>
-        <div className="mt-2 flex items-center justify-between">
-          <RatingStars value={salon.rating} count={salon.reviewCount} />
-          {salon.distanceKm != null && (
-            <span className="text-xs text-muted-foreground">{formatKm(salon.distanceKm)}</span>
-          )}
+        {salon.distanceKm != null && (
+          <span className="absolute right-3 top-3 rounded-full bg-foreground/85 px-2.5 py-1 text-[10px] font-semibold text-background backdrop-blur">
+            {formatKm(salon.distanceKm)}
+          </span>
+        )}
+        <div className="absolute inset-x-3 bottom-3 text-white">
+          <h3 className="truncate text-base font-bold drop-shadow">{salon.name}</h3>
+          <p className="mt-0.5 truncate text-[11px] text-white/85">{salon.address}</p>
         </div>
+      </div>
+      <div className="flex items-center justify-between bg-surface px-3.5 py-3">
+        <RatingStars value={salon.rating} count={salon.reviewCount} />
+        <span className="rounded-full bg-foreground/5 px-2.5 py-1 text-[10px] font-semibold text-foreground">
+          {salon.tags[0]}
+        </span>
       </div>
     </Link>
   );

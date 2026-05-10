@@ -3,7 +3,7 @@ import { Bell, Calendar, Compass, MapPin, MessageCircle, User } from "lucide-rea
 import { useNotificationsStore } from "@/lib/stores/notifications";
 
 const TABS = [
-  { to: "/", label: "Asosiy", icon: Compass, exact: true },
+  { to: "/", label: "Asosiy", icon: Compass },
   { to: "/map", label: "Xarita", icon: MapPin },
   { to: "/bookings", label: "Bandlar", icon: Calendar },
   { to: "/chat", label: "Chat", icon: MessageCircle },
@@ -20,32 +20,34 @@ export function FloatingBottomDock() {
       className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center pb-safe"
       aria-label="Asosiy navigatsiya"
     >
-      <div className="pointer-events-auto mx-3 mb-2 flex w-full max-w-md items-center justify-between rounded-3xl border border-border/60 bg-surface/85 px-2 py-2 shadow-dock backdrop-blur-xl">
+      <div className="pointer-events-auto mx-3 mb-2 flex w-full max-w-md items-center justify-between rounded-[28px] border border-white/40 bg-foreground/95 p-1.5 shadow-dock backdrop-blur-2xl">
         {TABS.map(({ to, label, icon: Icon }) => {
           const active = to === "/" ? loc.pathname === "/" : loc.pathname.startsWith(to);
           return (
             <Link
               key={to}
               to={to}
-              className="group relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[10px] font-medium transition"
+              className="group relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[10px] font-medium transition"
               aria-label={label}
               aria-current={active ? "page" : undefined}
             >
               <span
                 className={[
-                  "relative grid h-9 w-9 place-items-center rounded-2xl transition",
-                  active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground group-hover:text-foreground",
+                  "relative grid h-10 w-10 place-items-center rounded-2xl transition",
+                  active
+                    ? "bg-gold text-gold-foreground shadow-soft"
+                    : "text-background/60 group-hover:text-background",
                 ].join(" ")}
               >
                 <Icon className="h-[18px] w-[18px]" aria-hidden />
                 {to === "/notifications" && unread > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-surface" />
-                )}
-                {active && (
-                  <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-gold" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-foreground" />
                 )}
               </span>
-              <span className={active ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+              <span className={[
+                "text-[9px] tracking-wide transition",
+                active ? "text-background" : "text-background/50",
+              ].join(" ")}>{label}</span>
             </Link>
           );
         })}
