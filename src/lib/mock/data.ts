@@ -1,4 +1,4 @@
-import type { Salon, Barber, Service, Review } from "./types";
+import type { Salon, Barber, Service, Review } from "../types";
 
 const TASHKENT = { lat: 41.3111, lng: 69.2797 };
 
