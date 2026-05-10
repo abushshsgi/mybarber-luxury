@@ -66,9 +66,11 @@ function MapPage() {
       </header>
 
       <div className="relative mx-4 flex-1 overflow-hidden rounded-3xl border border-border bg-muted shadow-card">
-        <Suspense fallback={<div className="grid h-full place-items-center text-muted-foreground"><MapPin className="h-6 w-6 animate-pulse" /></div>}>
+        {typeof window !== "undefined" ? (
           <MapView center={coords} markers={markers} activeId={activeId} onMarkerClick={setActiveId} radiusKm={radiusKm} />
-        </Suspense>
+        ) : (
+          <div className="grid h-full place-items-center text-muted-foreground"><MapPin className="h-6 w-6 animate-pulse" /></div>
+        )}
         <button
           type="button"
           onClick={request}
